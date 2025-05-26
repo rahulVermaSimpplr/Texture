@@ -51,13 +51,17 @@ NS_INLINE ASConfigurationManager *ASConfigurationManagerGet() {
 
 - (void)frameworkDidInitialize
 {
-  ASDisplayNodeAssertMainThread();
+  // Added check to run the code on main thread only for non preview (swiftUI previews) environments.
+  if (![[NSProcessInfo processInfo].environment[@"XCODE_RUNNING_FOR_PREVIEWS"] isEqualToString:@"1"]) {
+    ASDisplayNodeAssertMainThread();
+  }
+
   if (_frameworkInitialized) {
     ASDisplayNodeFailAssert(@"Framework initialized twice.");
     return;
   }
   _frameworkInitialized = YES;
-  
+
   const auto delegate = _config.delegate;
   if ([delegate respondsToSelector:@selector(textureDidInitialize)]) {
     [delegate textureDidInitialize];

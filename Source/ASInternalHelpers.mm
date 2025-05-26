@@ -65,7 +65,12 @@ void ASInitializeFrameworkMainThreadOnConstructor(void)
 {
   static dispatch_once_t onceToken;
   dispatch_once(&onceToken, ^{
-    ASDisplayNodeCAssertMainThread();
+
+    // Added check to run the code on main thread only for non preview (swiftUI previews) environments.
+    if (![[NSProcessInfo processInfo].environment[@"XCODE_RUNNING_FOR_PREVIEWS"] isEqualToString:@"1"]) {
+      ASDisplayNodeCAssertMainThread();
+    }
+
     ASNotifyInitialized();
 #if AS_SIGNPOST_ENABLE
     _ASInitializeSignpostObservers();
@@ -77,6 +82,12 @@ void ASInitializeFrameworkMainThreadOnDestructor(void)
 {
   static dispatch_once_t onceToken;
   dispatch_once(&onceToken, ^{
+
+    // Skip in SwiftUI preview mode
+    if ([[NSProcessInfo processInfo].environment[@"XCODE_RUNNING_FOR_PREVIEWS"] isEqualToString:@"1"]) {
+      return;
+    }
+
     ASDisplayNodeCAssertMainThread();
     // Ensure these values are cached on the main thread before needed in the background.
     if (ASActivateExperimentalFeature(ASExperimentalLayerDefaults)) {
